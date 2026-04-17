@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Genie Drawing Game</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; }
+        
+        #bg-video {
+            position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%;
+            z-index: -1; object-fit: cover;
+        }
+
+        #game-container { 
+            display: flex; width: 100vw; height: 100vh; 
+            align-items: center; justify-content: space-between;
+            padding: 0 40px; box-sizing: border-box;
+        }
+
+        /* --- WHITEBOARD --- */
+        #whiteboard-container { 
+            width: 50%; height: 60%; background: white; 
+            border: 15px solid #5D4037; border-radius: 20px; 
+            position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+            margin-top: 50px;
+        }
+        #canvas { width: 100%; height: 100%; touch-action: none; }
+        
+        #prompt-box {
+            position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+            background: #FFF9C4; border: 6px solid #FBC02D;
+            padding: 15px 40px; border-radius: 50px; min-width: 300px;
+            text-align: center; box-shadow: 0 8px 0px #F9A825;
+            display: none; opacity: 0; transition: opacity 0.5s;
+        }
+        #instruction { font-size: 2.8rem; margin: 0; color: #333; }
+
+        /* LARGE REVEAL WORD */
+        #big-reveal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-size: 8rem; color: #FFEB3B; text-shadow: 0 0 20px rgba(0,0,0,0.8), 5px 5px 0px #E65100;
+            z-index: 200; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; text-align: center;
+        }
+
+        #timer-display { 
+            position: absolute; top: 15px; right: 25px; 
+            font-size: 4rem; color: #D32F2F; font-weight: bold; 
+        }
+
+        /* --- GENIE & LAMP --- */
+        #genie-side { 
+            width: 45%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+        }
+        .genie-box { position: relative; width: 100%; text-align: center; }
+        #genie-img { width: 550px; height: auto; margin-bottom: -80px; z-index: 1; position: relative; }
+        #lamp-img { width: 420px; height: auto; z-index: 2; position: relative; }
+
+        .shake { animation: shake 0.4s infinite; }
+        @keyframes shake {
+            0% { transform: translate(3px, 3px) rotate(0deg); }
+            25% { transform: translate(-6px, 0px) rotate(-5deg); }
+            50% { transform: translate(6px, 3px) rotate(5deg); }
+            100% { transform: translate(3px, -3px) rotate(-3deg); }
+        }
+
+        /* BUTTONS */
+        #controls { position: absolute; bottom: -90px; width: 100%; display: flex; justify-content: center; gap: 15px; }
+        .btn { padding: 18px 30px; font-size: 1.4rem; border-radius: 15px; border: 4px solid white; cursor: pointer; color: white; font-weight: bold; }
+        .color-black { background: black; }
+        .color-blue { background: #2979FF; }
+        .color-green { background: #00E676; }
+        .eraser { background: #757575; }
+        
+        #start-btn { 
+            margin-top: 20px; padding: 30px 100px; font-size: 3.5rem; 
+            background: #FF6D00; color: white; border: 8px solid white; 
+            border-radius: 60px; cursor: pointer;
+        }
+
+        #ok-btn { background: #AA00FF; display: none; border: 5px solid #FFD600; }
+        .flicker { animation: flicker 0.4s infinite; }
+        @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        #video-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: black; display: none; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop id="bg-video"><source src="background.mp4" type="video/mp4"></video>
+
+    <div id="big-reveal"></div>
+
+    <div id="video-overlay">
+        <video id="reward-video" playsinline><source src="goodjob.mp4" type="video/mp4"></video>
+        <button class="btn" style="margin-top:20px; background: #FF6D00; width: 300px;" onclick="resetGame()">NEXT</button>
+    </div>
+
+    <div id="game-container">
+        <div id="whiteboard-container">
+            <div id="prompt-box"><p id="instruction"></p></div>
+            <div id="timer-display"></div>
+            <canvas id="canvas"></canvas>
+            <div id="controls">
+                <button class="btn color-black" onclick="setColor('black')">Black</button>
+                <button class="btn color-blue" onclick="setColor('blue')">Blue</button>
+                <button class="btn color-green" onclick="setColor('green')">Green</button>
+                <button class="btn eraser" onclick="setColor('white')">Eraser</button>
+                <button id="ok-btn" class="btn flicker" onclick="showReward()">OKAY!</button>
+            </div>
+        </div>
+
+        <div id="genie-side">
+            <div class="genie-box">
+                <img src="genie.gif" id="genie-img">
+                <img src="lamp.gif" id="lamp-img">
+            </div>
+            <button id="start-btn" onclick="startGame()">START</button>
+        </div>
+    </div>
+
+    <audio id="snd-tick" src="tick.mp3"></audio>
+    <audio id="snd-timesup" src="timesup.mp3"></audio>
+    <audio id="snd-shimmer" src="shimmer.mp3"></audio>
+    <audio id="snd-reveal" src="reveal.mp3"></audio>
+
+    <script>
+        const words = [
+            { t: "Draw a Flower", e: "🌸" },
+            { t: "Draw a Heart", e: "❤️" },
+            { t: "Draw a Star", e: "⭐" },
+            { t: "Draw a Smile", e: "😊" },
+            { t: "Draw a Sad Face", e: "😢" }
+        ];
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const genieImg = document.getElementById('genie-img');
+        const lampImg = document.getElementById('lamp-img');
+        const startBtn = document.getElementById('start-btn');
+        const promptBox = document.getElementById('prompt-box');
+        const bigReveal = document.getElementById('big-reveal');
+        
+        let painting = false;
+        let tickAudio = document.getElementById('snd-tick');
+
+        function initCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.strokeStyle = 'black';
+        }
+        window.onload = initCanvas;
+
+        function startGame() {
+            startBtn.style.visibility = "hidden";
+            
+            // 1. Shimmer Sound + Shake
+            document.getElementById('snd-shimmer').play();
+            lampImg.classList.add('shake');
+            genieImg.src = "genie.gif?t=" + new Date().getTime();
+
+            setTimeout(() => {
+                lampImg.classList.remove('shake');
+                const selected = words[Math.floor(Math.random() * words.length)];
+                
+                // 2. Reveal Sound + Big Word Pop
+                document.getElementById('snd-reveal').play();
+                bigReveal.innerHTML = `${selected.t}<br>${selected.e}`;
+                bigReveal.style.transform = "translate(-50%, -50%) scale(1)";
+                
+                // 3. Move Word to Box and Start Timer after 1.5 seconds
+                setTimeout(() => {
+                    bigReveal.style.transform = "translate(-50%, -50%) scale(0)";
+                    document.getElementById('instruction').innerHTML = `${selected.t} ${selected.e}`;
+                    promptBox.style.display = 'block';
+                    promptBox.style.opacity = '1';
+                    startTimer();
+                }, 1500);
+
+            }, 2000);
+        }
+
+        function startTimer() {
+            let timeLeft = 10;
+            document.getElementById('timer-display').innerText = timeLeft;
+            
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = timeLeft;
+                
+                if (timeLeft <= 8 && timeLeft > 0) {
+                    tickAudio.currentTime = 0;
+                    tickAudio.play();
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    tickAudio.pause(); // Stop ticking
+                    document.getElementById('snd-timesup').play();
+                    document.getElementById('ok-btn').style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        // DRAWING LOGIC
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+        function startDraw(e) { painting = true; draw(e); }
+        function endDraw() { painting = false; ctx.beginPath(); }
+        function draw(e) {
+            if (!painting) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+        }
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+        canvas.addEventListener('touchend', endDraw);
+
+        function setColor(c) { ctx.strokeStyle = c; ctx.lineWidth = (c === 'white') ? 60 : 10; }
+        function showReward() {
+            document.getElementById('video-overlay').style.display = 'flex';
+            document.getElementById('reward-video').play();
+        }
+        function resetGame() { location.reload(); }
+    </script>
+</body>
+</html>
