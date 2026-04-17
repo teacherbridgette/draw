@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Genie Drawing Game</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif;
+            background-color: black;
+        }
         
         #bg-video {
             position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%;
@@ -20,43 +24,45 @@
 
         /* --- WHITEBOARD --- */
         #whiteboard-container { 
-            width: 50%; height: 60%; background: white; 
+            width: 52%; height: 60%; background: white; 
             border: 15px solid #5D4037; border-radius: 20px; 
             position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
             margin-top: 50px;
         }
-        #canvas { width: 100%; height: 100%; touch-action: none; }
+        #canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
         
+        /* PROMPT BOX */
         #prompt-box {
             position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
             background: #FFF9C4; border: 6px solid #FBC02D;
-            padding: 15px 40px; border-radius: 50px; min-width: 300px;
+            padding: 15px 40px; border-radius: 50px; min-width: 320px;
             text-align: center; box-shadow: 0 8px 0px #F9A825;
             display: none; opacity: 0; transition: opacity 0.5s;
         }
         #instruction { font-size: 2.8rem; margin: 0; color: #333; }
 
-        /* LARGE REVEAL WORD */
+        /* BIG REVEAL CENTER SCREEN */
         #big-reveal {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-size: 8rem; color: #FFEB3B; text-shadow: 0 0 20px rgba(0,0,0,0.8), 5px 5px 0px #E65100;
-            z-index: 200; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none; text-align: center;
+            font-size: 9rem; color: #FFEB3B; text-shadow: 0 0 30px rgba(0,0,0,0.9), 6px 6px 0px #E65100;
+            z-index: 200; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; text-align: center; line-height: 1;
         }
 
         #timer-display { 
             position: absolute; top: 15px; right: 25px; 
-            font-size: 4rem; color: #D32F2F; font-weight: bold; 
+            font-size: 4.5rem; color: #D32F2F; font-weight: bold; 
+            font-family: monospace;
         }
 
         /* --- GENIE & LAMP --- */
         #genie-side { 
-            width: 45%; display: flex; flex-direction: column; 
+            width: 42%; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; 
         }
         .genie-box { position: relative; width: 100%; text-align: center; }
-        #genie-img { width: 550px; height: auto; margin-bottom: -80px; z-index: 1; position: relative; }
-        #lamp-img { width: 420px; height: auto; z-index: 2; position: relative; }
+        #genie-img { width: 100%; max-width: 550px; height: auto; margin-bottom: -90px; z-index: 1; position: relative; }
+        #lamp-img { width: 80%; max-width: 420px; height: auto; z-index: 2; position: relative; }
 
         .shake { animation: shake 0.4s infinite; }
         @keyframes shake {
@@ -66,29 +72,31 @@
             100% { transform: translate(3px, -3px) rotate(-3deg); }
         }
 
-        /* BUTTONS */
-        #controls { position: absolute; bottom: -90px; width: 100%; display: flex; justify-content: center; gap: 15px; }
-        .btn { padding: 18px 30px; font-size: 1.4rem; border-radius: 15px; border: 4px solid white; cursor: pointer; color: white; font-weight: bold; }
+        /* --- BUTTONS & CONTROLS --- */
+        #controls { position: absolute; bottom: -95px; width: 100%; display: flex; justify-content: center; gap: 20px; }
+        .btn { padding: 20px 35px; font-size: 1.5rem; border-radius: 18px; border: 4px solid white; cursor: pointer; color: white; font-weight: bold; }
         .color-black { background: black; }
         .color-blue { background: #2979FF; }
         .color-green { background: #00E676; }
         .eraser { background: #757575; }
         
         #start-btn { 
-            margin-top: 20px; padding: 30px 100px; font-size: 3.5rem; 
+            margin-top: 30px; padding: 30px 100px; font-size: 3.5rem; 
             background: #FF6D00; color: white; border: 8px solid white; 
-            border-radius: 60px; cursor: pointer;
+            border-radius: 70px; cursor: pointer; box-shadow: 0 10px 0px #BF360C;
         }
 
-        #ok-btn { background: #AA00FF; display: none; border: 5px solid #FFD600; }
+        #ok-btn { background: #AA00FF; display: none; border: 5px solid #FFD600; box-shadow: 0 0 20px #AA00FF; }
         .flicker { animation: flicker 0.4s infinite; }
-        @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
+        /* VIDEO OVERLAY */
         #video-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: black; display: none; flex-direction: column;
             justify-content: center; align-items: center; z-index: 1000;
         }
+        #reward-video { width: 95%; height: 85%; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -99,7 +107,7 @@
 
     <div id="video-overlay">
         <video id="reward-video" playsinline><source src="goodjob.mp4" type="video/mp4"></video>
-        <button class="btn" style="margin-top:20px; background: #FF6D00; width: 300px;" onclick="resetGame()">NEXT</button>
+        <button class="btn" style="margin-top:20px; background: #FF6D00; width: 350px; font-size: 2.5rem;" onclick="resetGame()">NEXT WORD</button>
     </div>
 
     <div id="game-container">
@@ -148,19 +156,23 @@
         const bigReveal = document.getElementById('big-reveal');
         
         let painting = false;
-        let tickAudio = document.getElementById('snd-tick');
 
         function initCanvas() {
+            // Set canvas size for iPad High-DPI
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
-            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.strokeStyle = 'black';
+            ctx.lineWidth = 12; 
+            ctx.lineCap = 'round'; 
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = 'black';
         }
         window.onload = initCanvas;
+        window.onresize = initCanvas;
 
         function startGame() {
             startBtn.style.visibility = "hidden";
             
-            // 1. Shimmer Sound + Shake
+            // 1. Shimmer + Shake
             document.getElementById('snd-shimmer').play();
             lampImg.classList.add('shake');
             genieImg.src = "genie.gif?t=" + new Date().getTime();
@@ -169,19 +181,19 @@
                 lampImg.classList.remove('shake');
                 const selected = words[Math.floor(Math.random() * words.length)];
                 
-                // 2. Reveal Sound + Big Word Pop
+                // 2. Reveal Sound + Big Center Word
                 document.getElementById('snd-reveal').play();
                 bigReveal.innerHTML = `${selected.t}<br>${selected.e}`;
                 bigReveal.style.transform = "translate(-50%, -50%) scale(1)";
                 
-                // 3. Move Word to Box and Start Timer after 1.5 seconds
+                // 3. Move to Box after delay
                 setTimeout(() => {
                     bigReveal.style.transform = "translate(-50%, -50%) scale(0)";
                     document.getElementById('instruction').innerHTML = `${selected.t} ${selected.e}`;
                     promptBox.style.display = 'block';
                     promptBox.style.opacity = '1';
                     startTimer();
-                }, 1500);
+                }, 1800);
 
             }, 2000);
         }
@@ -195,20 +207,21 @@
                 document.getElementById('timer-display').innerText = timeLeft;
                 
                 if (timeLeft <= 8 && timeLeft > 0) {
-                    tickAudio.currentTime = 0;
-                    tickAudio.play();
+                    const tick = document.getElementById('snd-tick');
+                    tick.currentTime = 0;
+                    tick.play();
                 }
 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    tickAudio.pause(); // Stop ticking
+                    document.getElementById('snd-tick').pause(); // Stop ticking
                     document.getElementById('snd-timesup').play();
                     document.getElementById('ok-btn').style.display = 'block';
                 }
             }, 1000);
         }
 
-        // DRAWING LOGIC
+        // --- IPAD TOUCH LOGIC ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -222,18 +235,34 @@
             const pos = getPos(e);
             ctx.lineTo(pos.x, pos.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
         }
+
+        // Support both mouse and touch
         canvas.addEventListener('mousedown', startDraw);
         canvas.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', endDraw);
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+        
+        canvas.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); // Prevents iPad scrolling
+            startDraw(e); 
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => { 
+            e.preventDefault(); 
+            draw(e); 
+        }, { passive: false });
+
         canvas.addEventListener('touchend', endDraw);
 
-        function setColor(c) { ctx.strokeStyle = c; ctx.lineWidth = (c === 'white') ? 60 : 10; }
+        function setColor(c) { 
+            ctx.strokeStyle = c; 
+            ctx.lineWidth = (c === 'white') ? 70 : 12; 
+        }
+
         function showReward() {
             document.getElementById('video-overlay').style.display = 'flex';
             document.getElementById('reward-video').play();
         }
+
         function resetGame() { location.reload(); }
     </script>
 </body>
