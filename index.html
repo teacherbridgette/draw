@@ -3,124 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Genie Drawing Game</title>
+    <title>Genie Drawing Challenge</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Force Fullscreen Layout */
+        :root { 
+            --font-main: 'Fredoka', sans-serif; 
+            --crayon-black: #2C3E50;
+            --crayon-red: #FF5252;
+            --crayon-green: #4CAF50;
+            --crayon-purple: #9C27B0;
+            --crayon-yellow: #FFEB3B;
+            --eraser-pink: #FF80AB;
+        }
+
         body, html { 
-            margin: 0; padding: 0; width: 100vw; height: 100vh; 
-            overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif;
-            background-color: #000;
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; font-family: var(--font-main);
+            /* Removed black background here */
+            background-color: transparent; 
         }
         
-        /* Responsive Background Video */
+        /* --- PERMANENT VIDEO BACKGROUND --- */
         #bg-video {
-            position: fixed; top: 50%; left: 50%;
-            min-width: 100%; min-height: 100%;
-            width: auto; height: auto;
-            z-index: -1; transform: translate(-50%, -50%);
-            object-fit: cover; /* Ensures no black bars */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            background-color: transparent;
+        }
+
+        /* --- FULLSCREEN WIDGET --- */
+        #fs-widget {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2000;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            backdrop-filter: blur(5px);
         }
 
         #game-container { 
-            display: flex; width: 100%; height: 100%; 
+            display: flex; width: 100vw; height: 100vh; 
             align-items: center; justify-content: space-between;
-            padding: 20px 40px; box-sizing: border-box;
+            padding: 0 2%; box-sizing: border-box;
+            visibility: hidden; 
         }
 
         /* --- WHITEBOARD --- */
         #whiteboard-container { 
-            width: 50%; height: 60%; background: white; 
-            border: 15px solid #5D4037; border-radius: 20px; 
-            position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
-            margin-top: 40px;
+            width: 50%; height: 65%; background: white; 
+            border: 15px solid #5D4037; border-radius: 30px; 
+            position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.6); 
         }
-        #canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; display: block; }
+        #canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; display: block; border-radius: 15px; }
         
         #prompt-box {
-            position: absolute; top: -110px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: -115px; left: 50%; transform: translateX(-50%);
             background: #FFF9C4; border: 6px solid #FBC02D;
-            padding: 10px 30px; border-radius: 50px; min-width: 280px;
-            text-align: center; box-shadow: 0 6px 0px #F9A825;
+            padding: 15px 40px; border-radius: 60px; min-width: 320px;
+            text-align: center; box-shadow: 0 8px 0px #F9A825;
             display: none; opacity: 0; transition: opacity 0.5s;
         }
-        #instruction { font-size: 2.5rem; margin: 0; color: #333; white-space: nowrap; }
+        #instruction { font-size: 2.8rem; margin: 0; color: #333; font-weight: 700; font-family: var(--font-main); }
 
         #big-reveal {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-size: 8rem; color: #FFEB3B; text-shadow: 0 0 30px #000, 5px 5px 0px #E65100;
-            z-index: 2000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none; text-align: center;
+            font-size: 8rem; color: #FFEB3B; text-shadow: 0 0 30px rgba(0,0,0,0.8), 6px 6px 0px #E65100;
+            z-index: 200; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; text-align: center; font-weight: 700; font-family: var(--font-main);
         }
 
-        #timer-display { 
-            position: absolute; top: 10px; right: 20px; 
-            font-size: 4rem; color: #D32F2F; font-weight: bold; 
-        }
+        #timer-display { position: absolute; top: 15px; right: 25px; font-size: 4.5rem; color: #D32F2F; font-weight: 700; font-family: var(--font-main); }
 
-        /* --- GENIE & LAMP --- */
         #genie-side { 
-            width: 45%; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; 
+            width: 45%; height: 100%; 
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-end; 
+            position: relative; padding-bottom: 20px; box-sizing: border-box;
         }
-        .genie-box { position: relative; width: 100%; height: 450px; text-align: center; }
-        #genie-img { width: 100%; max-width: 500px; position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%); z-index: 1; }
-        #lamp-img { width: 80%; max-width: 380px; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 2; }
+        .genie-box { 
+            position: relative; width: 100%; height: 90%; 
+            display: flex; align-items: flex-end; justify-content: center;
+        }
+        #genie-img { width: 100%; max-width: 700px; height: auto; position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 1; }
+        #lamp-img { width: 90%; max-width: 600px; height: auto; position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); z-index: 2; }
 
         .shake { animation: shake 0.4s infinite; }
         @keyframes shake {
             0% { transform: translate(3px, 3px) rotate(0deg) translateX(-50%); }
-            25% { transform: translate(-6px, 0px) rotate(-4deg) translateX(-50%); }
-            50% { transform: translate(6px, 3px) rotate(4deg) translateX(-50%); }
-            100% { transform: translate(3px, -3px) rotate(-2deg) translateX(-50%); }
+            25% { transform: translate(-6px, 0px) rotate(-5deg) translateX(-50%); }
+            50% { transform: translate(6px, 3px) rotate(5deg) translateX(-50%); }
+            100% { transform: translate(3px, -3px) rotate(-3deg) translateX(-50%); }
         }
 
-        /* --- BUTTONS --- */
-        #controls { position: absolute; bottom: -85px; width: 100%; display: flex; justify-content: center; gap: 15px; }
-        .btn { padding: 15px 25px; font-size: 1.3rem; border-radius: 15px; border: 3px solid white; cursor: pointer; color: white; font-weight: bold; }
-        .color-black { background: black; }
-        .color-blue { background: #2979FF; }
-        .color-green { background: #00E676; }
-        .eraser { background: #757575; }
+        #controls { position: absolute; bottom: -105px; width: 100%; display: flex; justify-content: center; gap: 12px; }
+        .btn { padding: 12px 20px; font-size: 1.3rem; border-radius: 50px; border: 4px solid white; cursor: pointer; color: white; font-weight: 700; font-family: var(--font-main); box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: transform 0.1s; }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
         
-        #start-btn { 
-            margin-top: 20px; padding: 25px 80px; font-size: 3rem; 
-            background: #FF6D00; color: white; border: 6px solid white; 
-            border-radius: 60px; cursor: pointer;
-        }
+        .c-black  { background: var(--crayon-black); }
+        .c-red    { background: var(--crayon-red); }
+        .c-green  { background: var(--crayon-green); }
+        .c-purple { background: var(--crayon-purple); }
+        .c-yellow { background: var(--crayon-yellow); color: #333; }
+        .eraser-btn { background: var(--eraser-pink); border-color: #F06292; }
+        
+        #start-btn-real { margin-top: 20px; padding: 20px 70px; font-size: 2.8rem; background: #FF6D00; color: white; border: 8px solid white; border-radius: 60px; cursor: pointer; box-shadow: 0 10px 0px #BF360C; position: relative; z-index: 3; font-family: var(--font-main); }
 
-        #ok-btn { background: #AA00FF; display: none; border: 4px solid #FFD600; }
-        .flicker { animation: flicker 0.4s infinite; }
-        @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        #fs-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #fs-btn { padding: 40px 80px; font-size: 4rem; background: #FF6D00; color: white; border: 10px solid white; border-radius: 100px; font-weight: 700; cursor: pointer; box-shadow: 0 15px 0px #BF360C; animation: bouncy 1.5s infinite alternate; font-family: var(--font-main); }
+        @keyframes bouncy { from { transform: scale(1); } to { transform: scale(1.1); } }
 
-        /* OVERLAYS */
-        #fullscreen-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 3000; display: flex;
-            flex-direction: column; justify-content: center; align-items: center;
-        }
-
-        #video-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: black; display: none; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 1000;
-        }
-        #reward-video { width: 100%; height: 80%; object-fit: contain; }
+        #video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        #reward-video { width: 100%; height: 85%; object-fit: contain; }
     </style>
 </head>
 <body>
 
-    <div id="fullscreen-overlay">
-        <h1 style="color:white; margin-bottom:20px;">Genie Drawing Challenge</h1>
-        <button id="start-btn" onclick="activateGame()">PLAY FULLSCREEN</button>
-    </div>
+    <div id="fs-widget" onclick="toggleFullscreen()">⛶</div>
 
-    <video autoplay muted loop id="bg-video"><source src="background.mp4" type="video/mp4"></video>
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="please.mp4" type="video/mp4">
+    </video>
+
+    <div id="fs-overlay">
+        <button id="fs-btn" onclick="initFullGame()">PLAY!</button>
+    </div>
 
     <div id="big-reveal"></div>
 
     <div id="video-overlay">
         <video id="reward-video" playsinline><source src="goodjob.mp4" type="video/mp4"></video>
-        <button class="btn" style="margin-top:20px; background: #FF6D00; width: 300px; font-size: 2rem;" onclick="resetGame()">PLAY AGAIN</button>
+        <button class="btn" style="margin-top:20px; background: #FF6D00; width: 350px; font-size: 2.5rem;" onclick="softReset()">TRY AGAIN</button>
     </div>
 
     <div id="game-container">
@@ -129,11 +160,12 @@
             <div id="timer-display"></div>
             <canvas id="canvas"></canvas>
             <div id="controls">
-                <button class="btn color-black" onclick="setColor('black')">Black</button>
-                <button class="btn color-blue" onclick="setColor('blue')">Blue</button>
-                <button class="btn color-green" onclick="setColor('green')">Green</button>
-                <button class="btn eraser" onclick="setColor('white')">Eraser</button>
-                <button id="ok-btn" class="btn flicker" onclick="showReward()">OKAY!</button>
+                <button class="btn c-black" onclick="setColor('#2C3E50')">Black</button>
+                <button class="btn c-red" onclick="setColor('#FF5252')">Red</button>
+                <button class="btn c-green" onclick="setColor('#4CAF50')">Green</button>
+                <button class="btn c-purple" onclick="setColor('#9C27B0')">Purple</button>
+                <button class="btn c-yellow" onclick="setColor('#FFEB3B')">Yellow</button>
+                <button class="btn eraser-btn" onclick="clearCanvas()">Eraser 🧽</button>
             </div>
         </div>
 
@@ -142,47 +174,58 @@
                 <img src="genie.gif" id="genie-img">
                 <img src="lamp.gif" id="lamp-img">
             </div>
-            <button id="start-btn-real" class="btn" style="background:#FF6D00; padding:20px 60px; font-size:2.5rem; border-radius:50px;" onclick="startGame()">START</button>
+            <button id="start-btn-real" onclick="startGame()">START</button>
         </div>
     </div>
 
-    <audio id="snd-tick" src="tick.mp3"></audio>
-    <audio id="snd-timesup" src="timesup.mp3"></audio>
-    <audio id="snd-shimmer" src="shimmer.mp3"></audio>
-    <audio id="snd-reveal" src="reveal.mp3"></audio>
+    <audio id="snd-tick" src="tick.mp3" preload="auto"></audio>
+    <audio id="snd-timesup" src="timesup.mp3" preload="auto"></audio>
+    <audio id="snd-shimmer" src="shimmer.mp3" preload="auto"></audio>
+    <audio id="snd-reveal" src="reveal.mp3" preload="auto"></audio>
 
     <script>
         const words = [
             { t: "Draw a Flower", e: "🌸" }, { t: "Draw a Heart", e: "❤️" },
-            { t: "Draw a Star", e: "⭐" }, { t: "Draw a Smile", e: "😊" },
-            { t: "Draw a Sad Face", e: "😢" }
+            { t: "Draw a Star", e: "⭐" }, { t: "Draw a Smile", e: "😊" }
         ];
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        
-        // Fullscreen for iPad
-        function activateGame() {
-            let elem = document.documentElement;
-            if (elem.requestFullscreen) { elem.requestFullscreen(); }
-            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } // iOS/Safari
-            
-            document.getElementById('fullscreen-overlay').style.display = 'none';
+        let painting = false;
+        let timerInterval;
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function initFullGame() {
+            const doc = document.documentElement;
+            if (doc.requestFullscreen) doc.requestFullscreen();
+            document.getElementById('fs-overlay').style.display = 'none';
+            document.getElementById('game-container').style.visibility = 'visible';
             initCanvas();
         }
 
         function initCanvas() {
-            // High-res fix for iPad
             const ratio = window.devicePixelRatio || 1;
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
             ctx.scale(ratio, ratio);
-            
-            ctx.lineWidth = 10;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 14; 
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
+            ctx.strokeStyle = '#2C3E50';
         }
+
+        function clearCanvas() {
+            const ratio = window.devicePixelRatio || 1;
+            ctx.clearRect(0, 0, canvas.width / ratio, canvas.height / ratio);
+        }
+
+        function setColor(c) { ctx.strokeStyle = c; }
 
         function startGame() {
             document.getElementById('start-btn-real').style.visibility = "hidden";
@@ -193,7 +236,6 @@
             setTimeout(() => {
                 document.getElementById('lamp-img').classList.remove('shake');
                 const selected = words[Math.floor(Math.random() * words.length)];
-                
                 document.getElementById('snd-reveal').play();
                 const br = document.getElementById('big-reveal');
                 br.innerHTML = `${selected.t}<br>${selected.e}`;
@@ -202,8 +244,8 @@
                 setTimeout(() => {
                     br.style.transform = "translate(-50%, -50%) scale(0)";
                     document.getElementById('instruction').innerHTML = `${selected.t} ${selected.e}`;
-                    const pb = document.getElementById('prompt-box');
-                    pb.style.display = 'block'; pb.style.opacity = '1';
+                    document.getElementById('prompt-box').style.display = 'block';
+                    document.getElementById('prompt-box').style.opacity = '1';
                     startTimer();
                 }, 1800);
             }, 2000);
@@ -211,43 +253,18 @@
 
         function startTimer() {
             let timeLeft = 10;
-            document.getElementById('timer-display').innerText = timeLeft;
-            const timerInterval = setInterval(() => {
+            const display = document.getElementById('timer-display');
+            display.innerText = timeLeft;
+            timerInterval = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer-display').innerText = timeLeft;
-                if (timeLeft <= 8 && timeLeft > 0) {
-                    const t = document.getElementById('snd-tick');
-                    t.currentTime = 0; t.play();
-                }
+                display.innerText = timeLeft;
+                if (timeLeft <= 8 && timeLeft > 0) document.getElementById('snd-tick').play();
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    document.getElementById('snd-tick').pause();
                     document.getElementById('snd-timesup').play();
-                    document.getElementById('ok-btn').style.display = 'block';
+                    showReward();
                 }
             }, 1000);
-        }
-
-        // --- DRAW LOGIC ---
-        let painting = false;
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-        function draw(e) {
-            if (!painting) return;
-            const pos = getPos(e);
-            ctx.lineTo(pos.x, pos.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
-        }
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); painting = true; draw(e); }, {passive: false});
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
-        canvas.addEventListener('touchend', () => { painting = false; ctx.beginPath(); });
-
-        function setColor(c) { 
-            ctx.strokeStyle = c; 
-            ctx.lineWidth = (c === 'white') ? 60 : 10; 
         }
 
         function showReward() {
@@ -255,7 +272,34 @@
             document.getElementById('reward-video').play();
         }
 
-        function resetGame() { location.reload(); }
+        function softReset() {
+            document.getElementById('video-overlay').style.display = 'none';
+            document.getElementById('reward-video').pause();
+            clearCanvas();
+            document.getElementById('prompt-box').style.display = 'none';
+            document.getElementById('start-btn-real').style.visibility = "visible";
+            document.getElementById('timer-display').innerText = "";
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+        function drawMove(e) {
+            if (!painting) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+        }
+        canvas.addEventListener('mousedown', (e) => { painting = true; drawMove(e); });
+        canvas.addEventListener('mousemove', drawMove);
+        window.addEventListener('mouseup', () => { painting = false; ctx.beginPath(); });
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); painting = true; drawMove(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); drawMove(e); }, {passive: false});
+        canvas.addEventListener('touchend', () => { painting = false; ctx.beginPath(); });
+        
+        window.addEventListener('resize', initCanvas);
     </script>
 </body>
 </html>
